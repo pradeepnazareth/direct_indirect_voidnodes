@@ -3,7 +3,7 @@ clear all;
 close all;
 
 % Number of Nodes
-numNodes=75;
+numNodes=10;
 % Maximum range of nodes
 range=250;
 %Location of sensor nodes initialization
@@ -17,7 +17,9 @@ voids= zeros(numNodes,1);
 % Keep track of no. of neighbour
 no_of_neighbour= zeros(numNodes,1)
 % Keep track of Direct void nodes
-DV=zeros(numNodes,1)
+DV=zeros(numNodes,1);
+IDV=zeros(numNodes,1);
+
 % keep track of neighbours of each node
 neighbour=zeros(numNodes,numNodes);
 % find distance between neighbours of each node to sink
@@ -81,91 +83,34 @@ for i=1:numNodes
      
      % store the neighbouring node with min. distance to sink
      node_to_sink(i,2)=min_neighbour_sink;
+     %check for direct void
      if ( (node_to_sink(i,2) > node_to_sink(i,1)) && (node_to_sink(i,1) > range))
          DV(i)= 1;
      end
 end
 
-  %%%%% logic to find indirect void nodes%%%%%%%%%%%%%%%%
 
-
-
-
-
-     
-neighbour=zeros(numNodes,numNodes);
-neighbour_sink=zeros(numNodes,numNodes);
-
- 
- 
- 
-% Find neighbouring nodes for all nodes
-for i =1: numNodes
-    for j= 1:numNodes
-        if ( i==j)
-            continue;
-        end
-        node_other(i,j)= sqrt((nodePositions(i,1)-nodePositions(j,1))^2 + ...
-        (nodePositions(i,2)-nodePositions(j,2))^2 + (nodePositions(i,3)-nodePositions(j,3))^2);
-        if(node_other(i,j) <= range)
-            neighbour(i,index)= j;
-            index = index + 1;
-        end
-    
+%%%%% logic to find indirect void nodes%%%%%%%%%%%%%%%%
+for i=1: numNodes
+    source=i;
+    data_delivered=0
+    while( data_delivered==0 && DV(i,1)==0 && IDV(i,1)==0)
+           [M, I] =min(neighbour_sink(i,:));
+           tentative_next_hop= neighbour(i,I);
+           if(DV(tentative_next_hop,1)==1 || IDV(tentative_next_hop,1)==1)
+               IDV(i,1)=1;
+               IDV(source,1)==1;
+               break;
+           else
+               selected_next_hop= tentative_next_hop;
+               i=selected_next_hop;
+           end
+           if(node_to_sink(i,1)<=range)
+               data_delivered=1;
+           end
+           
     end
-  sender=i;
-  delivered=0;
-  void=0;
-    
- while ( delivered==0 && void==0)
-   index=1;
-     
-     if ( node_to_sink(i,1) <= range)
-        voids(sender,1)=0;
-        delivered =1;
-        break;
-    end
-        
-    for j= 1:numNodes
-        if ( i==j)
-            continue;
-        end
-        node_other(i,j)= sqrt((nodePositions(i,1)-nodePositions(j,1))^2 + ...
-        (nodePositions(i,2)-nodePositions(j,2))^2 + (nodePositions(i,3)-nodePositions(j,3))^2);
-        if(node_other(i,j) <= range)
-            neighbour(i,index)= j;
-            index = index + 1;
-        end
-    end
-    index=1;
-    no_of_neighbour(i,1)=sum(neighbour(i,:)~= 0)
-    
-    
-    % Find the distance between neighbour node to sink
-    for k=1:no_of_neighbour(i)
-        neighbour_sink(i,k)=sqrt((nodePositions(neighbour(i,k),1)-sink_x)^2 + ...
-        (nodePositions(neighbour(i,k),2)-sink_y)^2 + (nodePositions(neighbour(i,k),3)-sink_z)^2);
-    end
-    neighbour_sink(neighbour_sink ==0) = 9999;
-    [M, I] =min(neighbour_sink(i,:));
-     min_neighbour_sink= M;
-     node_to_sink(i,2)=min_neighbour_sink;
-     if ( node_to_sink(i,2) > node_to_sink(i,1))
-         voids(sender,1)=1;
-         delivered=0;
-         void=1;
-     end
-     
-     next_hop= neighbour(i,I);
-     i=next_hop;
-  end
-    
 end
-
-   
-    
-  % while (delivery == 0 && void==0 )
-       
      
      
     
